@@ -1,0 +1,3174 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Egg Rush Online</title>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#000;
+}
+
+canvas{
+    display:block;
+}
+
+#startScreen{
+    position:fixed;
+    inset:0;
+    z-index:100;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+        radial-gradient(circle at 50% 30%,rgba(100,255,150,.2),transparent 35%),
+        linear-gradient(#071d0d,#123b1d);
+    color:white;
+}
+
+.menu{
+    width:min(520px,92vw);
+    padding:35px;
+    text-align:center;
+    border-radius:25px;
+    background:rgba(0,0,0,.68);
+    border:2px solid rgba(255,255,255,.15);
+    box-shadow:0 20px 80px rgba(0,0,0,.6);
+}
+
+.menu h1{
+    margin:0 0 8px;
+    font-size:50px;
+}
+
+.menu p{
+    color:#c8d8cc;
+}
+
+.bigButton{
+    width:100%;
+    border:0;
+    padding:16px;
+    margin-top:10px;
+    border-radius:12px;
+    font-size:20px;
+    font-weight:bold;
+    cursor:pointer;
+    background:#4caf50;
+    color:white;
+}
+
+.bigButton:hover{
+    background:#66bb6a;
+}
+
+#hud{
+    position:fixed;
+    top:15px;
+    left:15px;
+    z-index:5;
+    color:white;
+    pointer-events:none;
+}
+
+.hudBox{
+    background:rgba(0,0,0,.55);
+    padding:10px 15px;
+    margin-bottom:7px;
+    border-radius:12px;
+    backdrop-filter:blur(5px);
+    font-weight:bold;
+}
+
+#eventMessage{
+    position:fixed;
+    top:20px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:20;
+    background:rgba(0,0,0,.78);
+    color:white;
+    padding:12px 25px;
+    border-radius:30px;
+    display:none;
+    font-weight:bold;
+}
+
+#controls{
+    position:fixed;
+    bottom:15px;
+    left:15px;
+    z-index:5;
+    color:white;
+    background:rgba(0,0,0,.5);
+    padding:10px 14px;
+    border-radius:12px;
+    font-size:13px;
+}
+
+#onlineStatus{
+    position:fixed;
+    top:15px;
+    right:15px;
+    z-index:10;
+    color:white;
+    background:rgba(0,0,0,.6);
+    padding:10px 15px;
+    border-radius:12px;
+    font-weight:bold;
+}
+
+#roomBox{
+    position:fixed;
+    inset:0;
+    z-index:200;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,.75);
+}
+
+.roomPanel{
+    width:min(450px,92vw);
+    padding:30px;
+    border-radius:20px;
+    background:#16241a;
+    color:white;
+    border:2px solid #4caf50;
+    text-align:center;
+}
+
+.roomPanel h2{
+    margin-top:0;
+}
+
+#roomInput{
+    width:100%;
+    padding:15px;
+    font-size:20px;
+    border:0;
+    border-radius:10px;
+    outline:none;
+    text-align:center;
+    text-transform:uppercase;
+    margin:10px 0;
+}
+
+.roomInfo{
+    color:#bbb;
+    font-size:13px;
+    line-height:1.5;
+}
+
+.roomClose{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border:0;
+    border-radius:10px;
+    background:#8f2929;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+#roomStatus{
+    margin-top:12px;
+    min-height:20px;
+    color:#ffd54f;
+    font-weight:bold;
+}
+
+#chatBox{
+    position:fixed;
+    left:50%;
+    bottom:80px;
+    transform:translateX(-50%);
+    z-index:150;
+    display:none;
+    width:min(600px,90vw);
+}
+
+#chatInput{
+    width:100%;
+    padding:15px;
+    border:2px solid #4caf50;
+    border-radius:12px;
+    outline:none;
+    font-size:17px;
+}
+
+#chatHint{
+    margin-top:5px;
+    text-align:center;
+    color:white;
+    font-size:12px;
+    text-shadow:0 1px 3px black;
+}
+
+#bubble{
+    position:fixed;
+    z-index:50;
+    transform:translate(-50%,-100%);
+    display:none;
+    background:white;
+    color:#111;
+    padding:10px 14px;
+    border-radius:14px;
+    font-weight:bold;
+    max-width:300px;
+    text-align:center;
+    box-shadow:0 5px 20px rgba(0,0,0,.4);
+    pointer-events:none;
+}
+
+#shop{
+    position:fixed;
+    inset:0;
+    z-index:180;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,.68);
+}
+
+.shopBox{
+    width:min(500px,92vw);
+    max-height:90vh;
+    overflow:auto;
+    background:#17231a;
+    color:white;
+    border:2px solid #4caf50;
+    border-radius:20px;
+    padding:25px;
+}
+
+.shopBox h2{
+    text-align:center;
+    margin-top:0;
+}
+
+.shopItem{
+    background:#26352a;
+    border-radius:14px;
+    padding:15px;
+    margin:10px 0;
+}
+
+.shopItem button{
+    width:100%;
+    padding:11px;
+    border:0;
+    border-radius:9px;
+    background:#4caf50;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.shopItem button:hover{
+    background:#66bb6a;
+}
+
+.closeShop{
+    width:100%;
+    padding:12px;
+    border:0;
+    border-radius:10px;
+    background:#9e2b2b;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+    margin-top:10px;
+}
+
+#enemyWarning{
+    position:fixed;
+    top:80px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:8;
+    display:none;
+    color:#ff5555;
+    font-size:20px;
+    font-weight:bold;
+    text-shadow:0 2px 5px #000;
+}
+</style>
+</head>
+
+<body>
+
+<div id="startScreen">
+    <div class="menu">
+        <h1>🥚 Egg Rush</h1>
+
+        <p>
+            Yumurtaları topla, üsse götür,
+            para kazan ve arkadaşlarınla oyna!
+        </p>
+
+        <button id="startButton" class="bigButton">
+            🎮 OYUNA BAŞLA
+        </button>
+
+        <p style="font-size:13px;margin-top:18px;">
+            <b>R</b> = Oda •
+            <b>T</b> = Chat •
+            <b>E</b> = Market
+            <br>
+            WASD = Hareket • Shift = Koş • Space = Zıpla
+        </p>
+    </div>
+</div>
+
+<div id="roomBox">
+    <div class="roomPanel">
+
+        <h2>🌐 ONLINE ODA</h2>
+
+        <p>
+            Oda kodunu yaz ve Enter'a bas.
+        </p>
+
+        <input
+            id="roomInput"
+            maxlength="12"
+            autocomplete="off"
+            placeholder="ÖRN: EGG123"
+        >
+
+        <div class="roomInfo">
+            İlk oyuncu odayı oluşturur.<br>
+            İkinci oyuncu aynı kodu yazarak katılır.
+        </div>
+
+        <div id="roomStatus"></div>
+
+        <button id="roomClose" class="roomClose">
+            ❌ KAPAT
+        </button>
+
+    </div>
+</div>
+
+<div id="hud">
+
+    <div class="hudBox">
+        🥚 Yumurta:
+        <span id="inventory">0 / 10</span>
+    </div>
+
+    <div class="hudBox">
+        💰 Para:
+        $<span id="money">0</span>
+    </div>
+
+    <div class="hudBox">
+        ⚡ Hız:
+        <span id="speed">10</span>
+    </div>
+
+</div>
+
+<div id="onlineStatus">
+    🌐 Offline
+</div>
+
+<div id="eventMessage"></div>
+
+<div id="enemyWarning">
+    😈 DİKKAT! DÜŞMAN PEŞİNDE!
+</div>
+
+<div id="controls">
+    R = Oda • T = Chat • E = Market
+    • WASD • Shift • Space
+</div>
+
+<div id="chatBox">
+
+    <input
+        id="chatInput"
+        maxlength="100"
+        autocomplete="off"
+        placeholder="Mesaj yaz..."
+    >
+
+    <div id="chatHint">
+        Enter = gönder • ESC = kapat
+    </div>
+
+</div>
+
+<div id="bubble"></div>
+
+<div id="shop">
+
+    <div class="shopBox">
+
+        <h2>🏪 MARKET</h2>
+
+        <div class="shopItem">
+            <b>⚡ Hız +1</b>
+            <p>$100</p>
+            <button id="speed1">
+                SATIN AL
+            </button>
+        </div>
+
+        <div class="shopItem">
+            <b>⚡ Hız +5</b>
+            <p>$500</p>
+            <button id="speed5">
+                SATIN AL
+            </button>
+        </div>
+
+        <div class="shopItem">
+            <b>⚡ Hız +5</b>
+            <p>$10.000</p>
+            <button id="speed10k">
+                SATIN AL
+            </button>
+        </div>
+
+        <div class="shopItem">
+            <b>🎒 Kapasite +1</b>
+            <p>$250</p>
+            <button id="cap1">
+                SATIN AL
+            </button>
+        </div>
+
+        <div class="shopItem">
+            <b>🎒 Kapasite +5</b>
+            <p>$1.000</p>
+            <button id="cap5">
+                SATIN AL
+            </button>
+        </div>
+
+        <div class="shopItem">
+            <b>🎒 Kapasite +100</b>
+            <p>$20.000</p>
+            <button id="cap100">
+                SATIN AL
+            </button>
+        </div>
+
+        <div class="shopItem">
+
+            <b>🎁 Gizli Kod</b>
+
+            <p>
+                RELASE
+            </p>
+
+            <input
+                id="codeInput"
+                style="
+                width:100%;
+                padding:10px;
+                border-radius:8px;
+                border:0;
+                margin-bottom:8px;
+                "
+                placeholder="Kodu yaz..."
+            >
+
+            <button id="codeButton">
+                KODU KULLAN
+            </button>
+
+        </div>
+
+        <button
+            class="closeShop"
+            id="closeShop"
+        >
+            ❌ MARKETİ KAPAT
+        </button>
+
+    </div>
+
+</div>
+
+<script type="module">
+
+import * as THREE from
+"https://cdn.jsdelivr.net/npm/three@0.161/build/three.module.js";
+
+/* =========================================================
+   THREE.JS
+========================================================= */
+
+const scene=
+new THREE.Scene();
+
+scene.background=
+new THREE.Color(0x87ceeb);
+
+scene.fog=
+new THREE.Fog(
+    0x87ceeb,
+    80,
+    220
+);
+
+const camera=
+new THREE.PerspectiveCamera(
+    70,
+    innerWidth/innerHeight,
+    .1,
+    500
+);
+
+const renderer=
+new THREE.WebGLRenderer({
+    antialias:true
+});
+
+renderer.setSize(
+    innerWidth,
+    innerHeight
+);
+
+renderer.setPixelRatio(
+    Math.min(
+        devicePixelRatio,
+        2
+    )
+);
+
+renderer.shadowMap.enabled=true;
+
+renderer.shadowMap.type=
+THREE.PCFSoftShadowMap;
+
+document.body.appendChild(
+    renderer.domElement
+);
+
+/* =========================================================
+   IŞIK
+========================================================= */
+
+const hemisphere=
+new THREE.HemisphereLight(
+    0xbfe9ff,
+    0x315b2c,
+    1.5
+);
+
+scene.add(hemisphere);
+
+const sun=
+new THREE.DirectionalLight(
+    0xffffff,
+    2
+);
+
+sun.position.set(
+    50,
+    100,
+    30
+);
+
+sun.castShadow=true;
+
+sun.shadow.mapSize.width=2048;
+sun.shadow.mapSize.height=2048;
+
+sun.shadow.camera.left=-120;
+sun.shadow.camera.right=120;
+sun.shadow.camera.top=120;
+sun.shadow.camera.bottom=-120;
+
+scene.add(sun);
+
+/* =========================================================
+   ZEMİN
+========================================================= */
+
+const MAP_LIMIT=105;
+
+const ground=
+new THREE.Mesh(
+    new THREE.PlaneGeometry(
+        220,
+        220
+    ),
+    new THREE.MeshStandardMaterial({
+        color:0x3f8f35
+    })
+);
+
+ground.rotation.x=
+-Math.PI/2;
+
+ground.receiveShadow=true;
+
+scene.add(ground);
+
+/* =========================================================
+   YOL
+========================================================= */
+
+const road=
+new THREE.Mesh(
+    new THREE.PlaneGeometry(
+        18,
+        220
+    ),
+    new THREE.MeshStandardMaterial({
+        color:0x9b7653
+    })
+);
+
+road.rotation.x=
+-Math.PI/2;
+
+road.position.y=.01;
+
+scene.add(road);
+
+for(
+    let z=-100;
+    z<=100;
+    z+=10
+){
+
+    const line=
+    new THREE.Mesh(
+        new THREE.BoxGeometry(
+            .5,
+            .05,
+            5
+        ),
+        new THREE.MeshStandardMaterial({
+            color:0xd8c18c
+        })
+    );
+
+    line.position.set(
+        0,
+        .04,
+        z
+    );
+
+    scene.add(line);
+}
+
+/* =========================================================
+   AĞAÇ
+========================================================= */
+
+function createTree(x,z){
+
+    const group=
+    new THREE.Group();
+
+    const trunk=
+    new THREE.Mesh(
+        new THREE.CylinderGeometry(
+            .6,
+            .8,
+            4,
+            8
+        ),
+        new THREE.MeshStandardMaterial({
+            color:0x70452b
+        })
+    );
+
+    trunk.position.y=2;
+
+    trunk.castShadow=true;
+
+    group.add(trunk);
+
+    const leaves=
+    new THREE.Mesh(
+        new THREE.SphereGeometry(
+            2.8,
+            10,
+            8
+        ),
+        new THREE.MeshStandardMaterial({
+            color:0x1f7a32
+        })
+    );
+
+    leaves.position.y=5;
+
+    leaves.castShadow=true;
+
+    group.add(leaves);
+
+    group.position.set(
+        x,
+        0,
+        z
+    );
+
+    scene.add(group);
+}
+
+for(let i=0;i<45;i++){
+
+    let x=
+    THREE.MathUtils.randFloat(
+        -100,
+        100
+    );
+
+    let z=
+    THREE.MathUtils.randFloat(
+        -100,
+        100
+    );
+
+    if(Math.abs(x)<15){
+
+        x +=
+        x<0
+        ? -20
+        : 20;
+    }
+
+    createTree(x,z);
+}
+
+/* =========================================================
+   TAŞLAR
+========================================================= */
+
+function createRock(x,z){
+
+    const rock=
+    new THREE.Mesh(
+        new THREE.DodecahedronGeometry(
+            THREE.MathUtils.randFloat(
+                .5,
+                1.4
+            )
+        ),
+        new THREE.MeshStandardMaterial({
+            color:0x777777
+        })
+    );
+
+    rock.position.set(
+        x,
+        .6,
+        z
+    );
+
+    rock.rotation.set(
+        Math.random(),
+        Math.random(),
+        Math.random()
+    );
+
+    rock.castShadow=true;
+
+    scene.add(rock);
+}
+
+for(let i=0;i<35;i++){
+
+    createRock(
+        THREE.MathUtils.randFloat(
+            -100,
+            100
+        ),
+        THREE.MathUtils.randFloat(
+            -100,
+            100
+        )
+    );
+}
+
+/* =========================================================
+   ÜS
+========================================================= */
+
+const base=
+new THREE.Group();
+
+const baseBody=
+new THREE.Mesh(
+    new THREE.BoxGeometry(
+        16,
+        4,
+        12
+    ),
+    new THREE.MeshStandardMaterial({
+        color:0x477a45
+    })
+);
+
+baseBody.position.y=2;
+
+baseBody.castShadow=true;
+
+base.add(baseBody);
+
+const roof=
+new THREE.Mesh(
+    new THREE.ConeGeometry(
+        11,
+        5,
+        4
+    ),
+    new THREE.MeshStandardMaterial({
+        color:0x9d3028
+    })
+);
+
+roof.rotation.y=
+Math.PI/4;
+
+roof.position.y=6.5;
+
+roof.castShadow=true;
+
+base.add(roof);
+
+const baseSign=
+new THREE.Mesh(
+    new THREE.BoxGeometry(
+        7,
+        1.5,
+        .3
+    ),
+    new THREE.MeshStandardMaterial({
+        color:0xffd43b
+    })
+);
+
+baseSign.position.set(
+    0,
+    4,
+    -6.2
+);
+
+base.add(baseSign);
+
+scene.add(base);
+
+/* =========================================================
+   MARKET
+========================================================= */
+
+const market=
+new THREE.Mesh(
+    new THREE.BoxGeometry(
+        10,
+        .3,
+        7
+    ),
+    new THREE.MeshStandardMaterial({
+        color:0xffc928
+    })
+);
+
+market.position.set(
+    20,
+    .15,
+    0
+);
+
+scene.add(market);
+
+/* =========================================================
+   OYUNCU
+========================================================= */
+
+function createPlayer(color){
+
+    const group=
+    new THREE.Group();
+
+    const body=
+    new THREE.Mesh(
+        new THREE.CapsuleGeometry(
+            .7,
+            1.4,
+            6,
+            12
+        ),
+        new THREE.MeshStandardMaterial({
+            color:color
+        })
+    );
+
+    body.position.y=1.4;
+
+    body.castShadow=true;
+
+    group.add(body);
+
+    const head=
+    new THREE.Mesh(
+        new THREE.SphereGeometry(
+            .65,
+            16,
+            12
+        ),
+        new THREE.MeshStandardMaterial({
+            color:0xffd2a1
+        })
+    );
+
+    head.position.y=2.9;
+
+    head.castShadow=true;
+
+    group.add(head);
+
+    const eyeMaterial=
+    new THREE.MeshStandardMaterial({
+        color:0x111111
+    });
+
+    const eye1=
+    new THREE.Mesh(
+        new THREE.SphereGeometry(
+            .08,
+            8,
+            8
+        ),
+        eyeMaterial
+    );
+
+    eye1.position.set(
+        -.22,
+        3,
+        -.56
+    );
+
+    group.add(eye1);
+
+    const eye2=
+    eye1.clone();
+
+    eye2.position.x=.22;
+
+    group.add(eye2);
+
+    return group;
+}
+
+const player=
+createPlayer(
+    0x247cff
+);
+
+player.position.set(
+    0,
+    0,
+    -15
+);
+
+scene.add(player);
+
+/* =========================================================
+   DÜŞMAN
+========================================================= */
+
+const enemy=
+createPlayer(
+    0xd71919
+);
+
+enemy.position.set(
+    0,
+    0,
+    40
+);
+
+scene.add(enemy);
+
+/* =========================================================
+   YUMURTALAR
+========================================================= */
+
+const eggTypes=[
+    {
+        name:"Normal Yumurta",
+        value:10,
+        color:0xffffff,
+        chance:60
+    },
+    {
+        name:"Altın Yumurta",
+        value:25,
+        color:0xffd700,
+        chance:25
+    },
+    {
+        name:"Elmas Yumurta",
+        value:75,
+        color:0x00ffff,
+        chance:12
+    },
+    {
+        name:"EFSANE Yumurta",
+        value:200,
+        color:0xff00ff,
+        chance:3
+    }
+];
+
+function randomEggType(){
+
+    const random=
+    Math.random()*100;
+
+    let total=0;
+
+    for(const egg of eggTypes){
+
+        total+=egg.chance;
+
+        if(random<=total){
+            return egg;
+        }
+    }
+
+    return eggTypes[0];
+}
+
+const eggs=[];
+
+function createEgg(){
+
+    const type=
+    randomEggType();
+
+    const egg=
+    new THREE.Mesh(
+        new THREE.SphereGeometry(
+            .65,
+            16,
+            12
+        ),
+        new THREE.MeshStandardMaterial({
+            color:type.color,
+            emissive:type.color,
+            emissiveIntensity:
+                type.name==="EFSANE Yumurta"
+                ? .35
+                : .05
+        })
+    );
+
+    egg.scale.set(
+        .8,
+        1.15,
+        .8
+    );
+
+    egg.position.set(
+        THREE.MathUtils.randFloat(
+            -95,
+            95
+        ),
+        1,
+        THREE.MathUtils.randFloat(
+            -95,
+            95
+        )
+    );
+
+    if(
+        Math.abs(egg.position.x)<12 &&
+        Math.abs(egg.position.z)<12
+    ){
+        egg.position.x+=30;
+    }
+
+    egg.castShadow=true;
+
+    egg.userData.type=type;
+
+    egg.userData.collected=false;
+
+    scene.add(egg);
+
+    eggs.push(egg);
+}
+
+for(let i=0;i<15;i++){
+    createEgg();
+}
+
+/* =========================================================
+   OYUN DEĞİŞKENLERİ
+========================================================= */
+
+let money=0;
+
+let speed=10;
+
+let inventory=[];
+
+let inventoryCapacity=10;
+
+let gameStarted=false;
+
+let shopOpen=false;
+
+let mouseLocked=false;
+
+let codeUsed=false;
+
+let enemyActive=false;
+
+let enemyChasing=false;
+
+let velocityY=0;
+
+let canJump=true;
+
+let yaw=0;
+
+let pitch=-.25;
+
+/* =========================================================
+   ONLINE DEĞİŞKENLER
+========================================================= */
+
+let peer=null;
+
+let connection=null;
+
+let roomCode="";
+
+let isHost=false;
+
+let online=false;
+
+const remotePlayers={};
+
+const playerId=
+"p_"+Math.random()
+.toString(36)
+.substring(2,10);
+
+/* =========================================================
+   ELEMENTLER
+========================================================= */
+
+const inventoryText=
+document.getElementById(
+    "inventory"
+);
+
+const moneyText=
+document.getElementById(
+    "money"
+);
+
+const speedText=
+document.getElementById(
+    "speed"
+);
+
+const eventMessage=
+document.getElementById(
+    "eventMessage"
+);
+
+const enemyWarning=
+document.getElementById(
+    "enemyWarning"
+);
+
+const onlineStatus=
+document.getElementById(
+    "onlineStatus"
+);
+
+const roomBox=
+document.getElementById(
+    "roomBox"
+);
+
+const roomInput=
+document.getElementById(
+    "roomInput"
+);
+
+const roomStatus=
+document.getElementById(
+    "roomStatus"
+);
+
+const chatBox=
+document.getElementById(
+    "chatBox"
+);
+
+const chatInput=
+document.getElementById(
+    "chatInput"
+);
+
+const bubble=
+document.getElementById(
+    "bubble"
+);
+
+/* =========================================================
+   HUD
+========================================================= */
+
+function updateInventoryUI(){
+
+    inventoryText.textContent=
+        inventory.length+
+        " / "+
+        inventoryCapacity;
+}
+
+function updateMoney(){
+
+    moneyText.textContent=
+        money.toLocaleString("tr-TR");
+}
+
+function updateSpeed(){
+
+    speedText.textContent=
+        speed;
+}
+
+/* =========================================================
+   MESAJ
+========================================================= */
+
+let eventTimer;
+
+function showEvent(message){
+
+    eventMessage.textContent=
+        message;
+
+    eventMessage.style.display=
+        "block";
+
+    clearTimeout(eventTimer);
+
+    eventTimer=
+        setTimeout(()=>{
+            eventMessage.style.display=
+                "none";
+        },3000);
+}
+
+/* =========================================================
+   ONLINE DURUM
+========================================================= */
+
+function setOnlineStatus(text){
+
+    onlineStatus.textContent=
+        text;
+}
+
+/* =========================================================
+   ODA EKRANI
+========================================================= */
+
+function openRoom(){
+
+    if(!gameStarted){
+        showEvent(
+            "Önce oyuna başla!"
+        );
+        return;
+    }
+
+    roomBox.style.display=
+        "flex";
+
+    roomInput.value=
+        roomCode;
+
+    roomStatus.textContent=
+        "";
+
+    setTimeout(()=>{
+        roomInput.focus();
+    },100);
+}
+
+function closeRoom(){
+
+    roomBox.style.display=
+        "none";
+
+    if(
+        gameStarted &&
+        !shopOpen &&
+        chatBox.style.display!=="block"
+    ){
+        renderer.domElement
+            .requestPointerLock();
+    }
+}
+
+document.getElementById(
+    "roomClose"
+).onclick=closeRoom;
+
+/* =========================================================
+   ODA KODU
+========================================================= */
+
+function cleanRoomCode(value){
+
+    return value
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g,"")
+        .substring(0,12);
+}
+
+roomInput.addEventListener(
+    "input",
+    ()=>{
+        roomInput.value=
+            cleanRoomCode(
+                roomInput.value
+            );
+    }
+);
+
+/* =========================================================
+   ODA OLUŞTUR / KATIL
+========================================================= */
+
+function enterRoom(){
+
+    const code=
+        cleanRoomCode(
+            roomInput.value
+        );
+
+    if(code.length<3){
+
+        roomStatus.textContent=
+            "❌ En az 3 karakter yaz.";
+
+        return;
+    }
+
+    roomCode=code;
+
+    roomStatus.textContent=
+        "🌐 Bağlanıyor...";
+
+    startPeerConnection(code);
+}
+
+roomInput.addEventListener(
+    "keydown",
+    event=>{
+
+        if(event.key==="Enter"){
+
+            event.preventDefault();
+
+            enterRoom();
+        }
+
+        if(event.key==="Escape"){
+            closeRoom();
+        }
+    }
+);
+
+/* =========================================================
+   PEER ID
+========================================================= */
+
+function makePeerId(code){
+
+    return (
+        "eggrush-room-" +
+        code.toLowerCase()
+    );
+}
+
+/* =========================================================
+   PEER BAŞLAT
+========================================================= */
+
+function startPeerConnection(code){
+
+    if(peer){
+
+        try{
+            peer.destroy();
+        }catch(e){}
+    }
+
+    connection=null;
+
+    isHost=false;
+
+    online=false;
+
+    const peerId=
+        makePeerId(code);
+
+    peer=
+        new Peer(
+            peerId,
+            {
+                debug:0
+            }
+        );
+
+    peer.on(
+        "open",
+        id=>{
+
+            isHost=true;
+
+            online=true;
+
+            roomStatus.textContent=
+                "✅ Oda oluşturuldu!";
+
+            setOnlineStatus(
+                "🌐 Oda: "+code
+            );
+
+            showEvent(
+                "🌐 Oda oluşturuldu: "+code
+            );
+
+            closeRoom();
+        }
+    );
+
+    peer.on(
+        "connection",
+        conn=>{
+
+            if(connection){
+
+                conn.close();
+
+                return;
+            }
+
+            connection=conn;
+
+            setupConnection(
+                conn
+            );
+        }
+    );
+
+    peer.on(
+        "error",
+        error=>{
+
+            if(
+                error.type===
+                "unavailable-id"
+            ){
+
+                try{
+                    peer.destroy();
+                }catch(e){}
+
+                joinExistingRoom(
+                    code
+                );
+
+                return;
+            }
+
+            console.error(
+                "PeerJS:",
+                error
+            );
+
+            roomStatus.textContent=
+                "❌ Bağlantı hatası: "+
+                error.type;
+
+            showEvent(
+                "❌ Odaya bağlanılamadı."
+            );
+        }
+    );
+
+    peer.on(
+        "disconnected",
+        ()=>{
+
+            online=false;
+
+            setOnlineStatus(
+                "⚠️ Bağlantı kesildi"
+            );
+        }
+    );
+
+    peer.on(
+        "close",
+        ()=>{
+
+            online=false;
+
+            setOnlineStatus(
+                "🔴 Offline"
+            );
+        }
+    );
+}
+
+/* =========================================================
+   MEVCUT ODAYA KATIL
+========================================================= */
+
+function joinExistingRoom(code){
+
+    roomStatus.textContent=
+        "🔗 Oda bulundu, katılıyor...";
+
+    peer=
+        new Peer({
+            debug:0
+        });
+
+    peer.on(
+        "open",
+        ()=>{
+            
+            const hostId=
+                makePeerId(code);
+
+            const conn=
+                peer.connect(
+                    hostId,
+                    {
+                        reliable:true
+                    }
+                );
+
+            connection=conn;
+
+            isHost=false;
+
+            setupConnection(
+                conn
+            );
+        }
+    );
+
+    peer.on(
+        "error",
+        error=>{
+
+            console.error(
+                error
+            );
+
+            roomStatus.textContent=
+                "❌ Odaya girilemedi.";
+
+            showEvent(
+                "❌ Oda bulunamadı veya bağlantı başarısız."
+            );
+        }
+    );
+}
+
+/* =========================================================
+   BAĞLANTI
+========================================================= */
+
+function setupConnection(conn){
+
+    conn.on(
+        "open",
+        ()=>{
+
+            online=true;
+
+            setOnlineStatus(
+                "🌐 Oda: "+roomCode
+            );
+
+            roomStatus.textContent=
+                "✅ Odaya bağlandın!";
+
+            showEvent(
+                "🌐 Online bağlantı kuruldu!"
+            );
+
+            sendNetwork({
+                type:"hello",
+                id:playerId,
+                x:player.position.x,
+                y:player.position.y,
+                z:player.position.z,
+                color:0x247cff
+            });
+
+            closeRoom();
+        }
+    );
+
+    conn.on(
+        "data",
+        data=>{
+            handleNetworkData(
+                data
+            );
+        }
+    );
+
+    conn.on(
+        "close",
+        ()=>{
+
+            online=false;
+
+            setOnlineStatus(
+                "🔴 Oyuncu ayrıldı"
+            );
+
+            removeAllRemotePlayers();
+
+            showEvent(
+                "⚠️ Online bağlantı kapandı."
+            );
+        }
+    );
+
+    conn.on(
+        "error",
+        error=>{
+            console.error(
+                error
+            );
+        }
+    );
+}
+
+/* =========================================================
+   NETWORK SEND
+========================================================= */
+
+function sendNetwork(data){
+
+    if(
+        connection &&
+        connection.open
+    ){
+
+        try{
+            connection.send(data);
+        }catch(e){
+            console.error(e);
+        }
+    }
+}
+
+/* =========================================================
+   NETWORK VERİ
+========================================================= */
+
+function handleNetworkData(data){
+
+    if(!data || !data.type){
+        return;
+    }
+
+    if(data.type==="hello"){
+
+        if(isHost){
+
+            sendNetwork({
+                type:"welcome",
+                host:true,
+                x:player.position.x,
+                y:player.position.y,
+                z:player.position.z,
+                money:money
+            });
+
+            createRemotePlayer(
+                data.id
+            );
+
+            broadcastState();
+        }
+
+        return;
+    }
+
+    if(data.type==="welcome"){
+
+        createRemotePlayer(
+            "host"
+        );
+
+        return;
+    }
+
+    if(data.type==="state"){
+
+        createRemotePlayer(
+            data.id
+        );
+
+        const remote=
+            remotePlayers[data.id];
+
+        if(!remote){
+            return;
+        }
+
+        remote.target.x=
+            data.x;
+
+        remote.target.y=
+            data.y;
+
+        remote.target.z=
+            data.z;
+
+        return;
+    }
+
+    if(data.type==="chat"){
+
+        if(data.id!==playerId){
+
+            showRemoteBubble(
+                data.message,
+                data.id
+            );
+        }
+
+        return;
+    }
+
+    if(data.type==="money"){
+
+        if(
+            typeof data.amount===
+            "number"
+        ){
+
+            money=
+                data.amount;
+
+            updateMoney();
+        }
+
+        return;
+    }
+
+    if(data.type==="playerLeft"){
+
+        removeRemotePlayer(
+            data.id
+        );
+
+        return;
+    }
+}
+
+/* =========================================================
+   REMOTE OYUNCU
+========================================================= */
+
+function createRemotePlayer(id){
+
+    if(
+        !id ||
+        id===playerId
+    ){
+        return;
+    }
+
+    if(
+        remotePlayers[id]
+    ){
+        return;
+    }
+
+    const mesh=
+        createPlayer(
+            0xffa726
+        );
+
+    mesh.position.set(
+        0,
+        0,
+        0
+    );
+
+    scene.add(mesh);
+
+    remotePlayers[id]={
+        mesh:mesh,
+        target:new THREE.Vector3(
+            0,
+            0,
+            0
+        ),
+        bubble:null
+    };
+
+    showEvent(
+        "👤 Yeni oyuncu bağlandı!"
+    );
+}
+
+function removeRemotePlayer(id){
+
+    const remote=
+        remotePlayers[id];
+
+    if(!remote){
+        return;
+    }
+
+    scene.remove(
+        remote.mesh
+    );
+
+    delete remotePlayers[id];
+}
+
+function removeAllRemotePlayers(){
+
+    for(
+        const id in remotePlayers
+    ){
+
+        removeRemotePlayer(
+            id
+        );
+    }
+}
+
+/* =========================================================
+   NETWORK DURUMU
+========================================================= */
+
+let networkSendTimer=0;
+
+function updateNetwork(delta){
+
+    if(!online){
+        return;
+    }
+
+    networkSendTimer+=delta;
+
+    if(
+        networkSendTimer>=
+        .05
+    ){
+
+        networkSendTimer=0;
+
+        sendNetwork({
+            type:"state",
+            id:playerId,
+            x:player.position.x,
+            y:player.position.y,
+            z:player.position.z
+        });
+    }
+
+    for(
+        const id in remotePlayers
+    ){
+
+        const remote=
+            remotePlayers[id];
+
+        remote.mesh.position.lerp(
+            remote.target,
+            .25
+        );
+    }
+}
+
+/* =========================================================
+   HOST STATE
+========================================================= */
+
+function broadcastState(){
+
+    sendNetwork({
+        type:"state",
+        id:playerId,
+        x:player.position.x,
+        y:player.position.y,
+        z:player.position.z
+    });
+}
+
+/* =========================================================
+   CHAT
+========================================================= */
+
+let bubbleTimer;
+
+function openChat(){
+
+    if(
+        !gameStarted ||
+        shopOpen
+    ){
+        return;
+    }
+
+    chatBox.style.display=
+        "block";
+
+    chatInput.value="";
+
+    chatInput.focus();
+
+    if(
+        document.pointerLockElement
+    ){
+        document.exitPointerLock();
+    }
+}
+
+function closeChat(){
+
+    chatBox.style.display=
+        "none";
+
+    chatInput.blur();
+}
+
+function showBubble(message){
+
+    bubble.textContent=
+        message;
+
+    bubble.style.display=
+        "block";
+
+    clearTimeout(
+        bubbleTimer
+    );
+
+    bubbleTimer=
+        setTimeout(()=>{
+            bubble.style.display=
+                "none";
+        },5000);
+}
+
+function handleChat(message){
+
+    message=
+        message.trim();
+
+    if(!message){
+        return;
+    }
+
+    const parts=
+        message.split(
+            /\s+/
+        );
+
+    if(
+        parts.length===4 &&
+        parts[0].toLowerCase()==="/give" &&
+        parts[1].toLowerCase()==="@s" &&
+        parts[2].toLowerCase()==="money"
+    ){
+
+        const amount=
+            Number(parts[3]);
+
+        if(
+            Number.isSafeInteger(
+                amount
+            ) &&
+            amount>0
+        ){
+
+            money+=amount;
+
+            updateMoney();
+
+            showBubble(
+                "💰 +$"+
+                amount.toLocaleString(
+                    "tr-TR"
+                )
+            );
+
+            showEvent(
+                "💰 +$"+
+                amount.toLocaleString(
+                    "tr-TR"
+                )
+            );
+
+            sendNetwork({
+                type:"money",
+                id:playerId,
+                amount:money
+            });
+
+            return;
+        }
+    }
+
+    showBubble(message);
+
+    sendNetwork({
+        type:"chat",
+        id:playerId,
+        message:message
+    });
+}
+
+chatInput.addEventListener(
+    "keydown",
+    event=>{
+
+        if(
+            event.key==="Enter"
+        ){
+
+            handleChat(
+                chatInput.value
+            );
+
+            closeChat();
+        }
+
+        if(
+            event.key==="Escape"
+        ){
+
+            closeChat();
+        }
+    }
+);
+
+/* =========================================================
+   UZAK OYUNCU CHAT
+========================================================= */
+
+const remoteBubbles={};
+
+function showRemoteBubble(
+    message,
+    id
+){
+
+    const remote=
+        remotePlayers[id];
+
+    if(!remote){
+        return;
+    }
+
+    if(
+        remoteBubbles[id]
+    ){
+
+        clearTimeout(
+            remoteBubbles[id].timer
+        );
+
+        remoteBubbles[id]
+            .element
+            .remove();
+    }
+
+    const el=
+        document.createElement(
+            "div"
+        );
+
+    el.style.position="fixed";
+    el.style.zIndex="100";
+    el.style.background="white";
+    el.style.color="#111";
+    el.style.padding="9px 13px";
+    el.style.borderRadius="13px";
+    el.style.fontWeight="bold";
+    el.style.pointerEvents="none";
+    el.style.transform=
+        "translate(-50%,-100%)";
+
+    el.textContent=
+        message;
+
+    document.body.appendChild(
+        el
+    );
+
+    const obj={
+        element:el,
+        timer:null
+    };
+
+    obj.timer=
+        setTimeout(()=>{
+            el.remove();
+            delete remoteBubbles[id];
+        },5000);
+
+    remoteBubbles[id]=obj;
+}
+
+/* =========================================================
+   REMOTE BALONLARI GÜNCELLE
+========================================================= */
+
+function updateRemoteBubbles(){
+
+    for(
+        const id in remoteBubbles
+    ){
+
+        const remote=
+            remotePlayers[id];
+
+        const item=
+            remoteBubbles[id];
+
+        if(
+            !remote ||
+            !item
+        ){
+            continue;
+        }
+
+        const pos=
+            new THREE.Vector3(
+                remote.mesh.position.x,
+                remote.mesh.position.y+4,
+                remote.mesh.position.z
+            );
+
+        pos.project(camera);
+
+        const x=
+            (pos.x*.5+.5)*
+            innerWidth;
+
+        const y=
+            (-pos.y*.5+.5)*
+            innerHeight;
+
+        item.element.style.left=
+            x+"px";
+
+        item.element.style.top=
+            y+"px";
+    }
+}
+
+/* =========================================================
+   OYUNCU CHAT BALONU
+========================================================= */
+
+function updateBubble(){
+
+    if(
+        bubble.style.display!=="block"
+    ){
+        return;
+    }
+
+    const position=
+        new THREE.Vector3(
+            player.position.x,
+            player.position.y+4,
+            player.position.z
+        );
+
+    position.project(
+        camera
+    );
+
+    const x=
+        (position.x*.5+.5)*
+        innerWidth;
+
+    const y=
+        (-position.y*.5+.5)*
+        innerHeight;
+
+    bubble.style.left=
+        x+"px";
+
+    bubble.style.top=
+        y+"px";
+}
+
+/* =========================================================
+   KLAVYE
+========================================================= */
+
+const keys={};
+
+document.addEventListener(
+    "keydown",
+    event=>{
+
+        if(
+            chatBox.style.display===
+            "block"
+        ){
+            return;
+        }
+
+        keys[event.code]=true;
+
+        if(
+            event.code==="KeyR" &&
+            gameStarted &&
+            !event.repeat
+        ){
+
+            event.preventDefault();
+
+            openRoom();
+
+            return;
+        }
+
+        if(
+            event.code==="KeyT" &&
+            gameStarted &&
+            !event.repeat
+        ){
+
+            event.preventDefault();
+
+            openChat();
+
+            return;
+        }
+
+        if(
+            event.code==="Space" &&
+            gameStarted &&
+            !shopOpen &&
+            canJump
+        ){
+
+            event.preventDefault();
+
+            velocityY=9;
+
+            canJump=false;
+        }
+    }
+);
+
+document.addEventListener(
+    "keyup",
+    event=>{
+        keys[event.code]=false;
+    }
+);
+
+/* =========================================================
+   MOUSE
+========================================================= */
+
+renderer.domElement.addEventListener(
+    "click",
+    ()=>{
+
+        if(
+            gameStarted &&
+            !shopOpen &&
+            roomBox.style.display!=="flex" &&
+            chatBox.style.display!=="block"
+        ){
+
+            renderer.domElement
+                .requestPointerLock();
+        }
+    }
+);
+
+document.addEventListener(
+    "pointerlockchange",
+    ()=>{
+
+        mouseLocked=
+            document.pointerLockElement===
+            renderer.domElement;
+    }
+);
+
+document.addEventListener(
+    "mousemove",
+    event=>{
+
+        if(
+            !mouseLocked ||
+            shopOpen ||
+            !gameStarted
+        ){
+            return;
+        }
+
+        yaw-=
+            event.movementX*.004;
+
+        pitch-=
+            event.movementY*.004;
+
+        pitch=
+            THREE.MathUtils.clamp(
+                pitch,
+                -.9,
+                .65
+            );
+    }
+);
+
+/* =========================================================
+   OYUNCU HAREKETİ
+========================================================= */
+
+function updatePlayer(delta){
+
+    if(
+        !gameStarted ||
+        shopOpen ||
+        roomBox.style.display==="flex" ||
+        chatBox.style.display==="block"
+    ){
+        return;
+    }
+
+    const forward=
+        new THREE.Vector3();
+
+    camera.getWorldDirection(
+        forward
+    );
+
+    forward.y=0;
+
+    if(
+        forward.lengthSq()<.001
+    ){
+        return;
+    }
+
+    forward.normalize();
+
+    const right=
+        new THREE.Vector3(
+            forward.z,
+            0,
+            -forward.x
+        );
+
+    const direction=
+        new THREE.Vector3();
+
+    if(keys["KeyW"]){
+        direction.add(
+            forward
+        );
+    }
+
+    if(keys["KeyS"]){
+        direction.sub(
+            forward
+        );
+    }
+
+    if(keys["KeyD"]){
+        direction.add(
+            right
+        );
+    }
+
+    if(keys["KeyA"]){
+        direction.sub(
+            right
+        );
+    }
+
+    if(
+        direction.lengthSq()>0
+    ){
+
+        direction.normalize();
+
+        let currentSpeed=
+            speed;
+
+        if(
+            keys["ShiftLeft"] ||
+            keys["ShiftRight"]
+        ){
+
+            currentSpeed*=1.5;
+        }
+
+        player.position.addScaledVector(
+            direction,
+            currentSpeed*delta
+        );
+
+        player.rotation.y=
+            Math.atan2(
+                direction.x,
+                direction.z
+            );
+    }
+
+    velocityY-=20*delta;
+
+    player.position.y+=
+        velocityY*delta;
+
+    if(
+        player.position.y<=0
+    ){
+
+        player.position.y=0;
+
+        velocityY=0;
+
+        canJump=true;
+    }
+
+    player.position.x=
+        THREE.MathUtils.clamp(
+            player.position.x,
+            -MAP_LIMIT,
+            MAP_LIMIT
+        );
+
+    player.position.z=
+        THREE.MathUtils.clamp(
+            player.position.z,
+            -MAP_LIMIT,
+            MAP_LIMIT
+        );
+}
+
+/* =========================================================
+   KAMERA
+========================================================= */
+
+function updateCamera(){
+
+    const cameraDistance=8;
+
+    const horizontal=
+        Math.cos(pitch)*
+        cameraDistance;
+
+    camera.position.x=
+        player.position.x-
+        Math.sin(yaw)*
+        horizontal;
+
+    camera.position.z=
+        player.position.z-
+        Math.cos(yaw)*
+        horizontal;
+
+    camera.position.y=
+        player.position.y+
+        3+
+        Math.sin(pitch)*
+        cameraDistance;
+
+    camera.lookAt(
+        player.position.x,
+        player.position.y+1.5,
+        player.position.z
+    );
+}
+
+/* =========================================================
+   YUMURTA TOPLAMA
+========================================================= */
+
+function collectEggs(){
+
+    if(
+        !gameStarted ||
+        shopOpen
+    ){
+        return;
+    }
+
+    for(
+        const egg of eggs
+    ){
+
+        if(
+            egg.userData.collected
+        ){
+            continue;
+        }
+
+        const distance=
+            player.position.distanceTo(
+                egg.position
+            );
+
+        if(
+            distance<2.2 &&
+            inventory.length<
+            inventoryCapacity
+        ){
+
+            egg.userData.collected=
+                true;
+
+            egg.visible=false;
+
+            inventory.push(
+                egg.userData.type
+            );
+
+            updateInventoryUI();
+
+            showEvent(
+                "🥚 "+
+                egg.userData.type.name+
+                " aldın!"
+            );
+
+            activateEnemy();
+        }
+    }
+}
+
+/* =========================================================
+   ÜSE TESLİM
+========================================================= */
+
+function deliverEggs(){
+
+    if(
+        !gameStarted ||
+        inventory.length===0
+    ){
+        return;
+    }
+
+    const distance=
+        player.position.distanceTo(
+            new THREE.Vector3(
+                0,
+                0,
+                0
+            )
+        );
+
+    if(distance<10){
+
+        let total=0;
+
+        for(
+            const egg of inventory
+        ){
+
+            total+=
+                egg.value;
+        }
+
+        money+=total;
+
+        inventory=[];
+
+        updateMoney();
+
+        updateInventoryUI();
+
+        sendNetwork({
+            type:"money",
+            id:playerId,
+            amount:money
+        });
+
+        showEvent(
+            "🏠 Yumurtalar teslim edildi! +$"+
+            total.toLocaleString(
+                "tr-TR"
+            )
+        );
+
+        enemyActive=false;
+
+        enemyChasing=false;
+
+        enemyWarning.style.display=
+            "none";
+
+        enemy.position.set(
+            player.position.x,
+            0,
+            player.position.z+40
+        );
+    }
+}
+
+/* =========================================================
+   DÜŞMAN
+========================================================= */
+
+function activateEnemy(){
+
+    enemyActive=true;
+
+    enemyChasing=true;
+
+    const behind=
+        new THREE.Vector3(
+            0,
+            0,
+            -1
+        );
+
+    behind.applyAxisAngle(
+        new THREE.Vector3(
+            0,
+            1,
+            0
+        ),
+        yaw
+    );
+
+    enemy.position.copy(
+        player.position
+    );
+
+    enemy.position.addScaledVector(
+        behind,
+        22
+    );
+
+    enemy.position.y=0;
+
+    enemyWarning.style.display=
+        "block";
+}
+
+function updateEnemy(delta){
+
+    if(
+        !enemyActive ||
+        !enemyChasing ||
+        !gameStarted ||
+        shopOpen
+    ){
+        return;
+    }
+
+    const target=
+        new THREE.Vector3(
+            player.position.x,
+            0,
+            player.position.z
+        );
+
+    const enemyPos=
+        new THREE.Vector3(
+            enemy.position.x,
+            0,
+            enemy.position.z
+        );
+
+    const direction=
+        new THREE.Vector3()
+        .subVectors(
+            target,
+            enemyPos
+        );
+
+    const distance=
+        direction.length();
+
+    if(distance>.1){
+
+        direction.normalize();
+
+        const enemySpeed=
+            Math.max(
+                5,
+                speed*.62
+            );
+
+        enemy.position.addScaledVector(
+            direction,
+            enemySpeed*delta
+        );
+
+        enemy.rotation.y=
+            Math.atan2(
+                direction.x,
+                direction.z
+            );
+    }
+
+    if(distance<2.2){
+
+        inventory=[];
+
+        updateInventoryUI();
+
+        showEvent(
+            "😈 Yakalandın! Yumurtalarını kaybettin!"
+        );
+
+        enemyActive=false;
+
+        enemyChasing=false;
+
+        enemyWarning.style.display=
+            "none";
+
+        enemy.position.set(
+            player.position.x,
+            0,
+            player.position.z+40
+        );
+    }
+}
+
+/* =========================================================
+   YUMURTALAR ANİMASYON
+========================================================= */
+
+function animateEggs(time){
+
+    for(
+        const egg of eggs
+    ){
+
+        if(
+            !egg.userData.collected
+        ){
+
+            egg.rotation.y+=.02;
+
+            egg.position.y=
+                1+
+                Math.sin(
+                    time*.003+
+                    egg.position.x
+                )*.15;
+        }
+    }
+}
+
+/* =========================================================
+   MARKET
+========================================================= */
+
+const shop=
+    document.getElementById(
+        "shop"
+    );
+
+function openShop(){
+
+    if(!gameStarted){
+        return;
+    }
+
+    shopOpen=true;
+
+    shop.style.display=
+        "flex";
+
+    if(
+        document.pointerLockElement
+    ){
+        document.exitPointerLock();
+    }
+}
+
+function closeShop(){
+
+    shopOpen=false;
+
+    shop.style.display=
+        "none";
+}
+
+document.getElementById(
+    "closeShop"
+).onclick=
+    closeShop;
+
+/* =========================================================
+   MARKET TUŞU
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    event=>{
+
+        if(
+            event.code==="KeyE" &&
+            gameStarted &&
+            !event.repeat &&
+            !shopOpen &&
+            chatBox.style.display!=="block"
+        ){
+
+            const distance=
+                player.position.distanceTo(
+                    market.position
+                );
+
+            if(distance<8){
+
+                openShop();
+
+            }else{
+
+                showEvent(
+                    "🏪 Markete yaklaş!"
+                );
+            }
+        }
+    }
+);
+
+/* =========================================================
+   MARKET SATIN ALMA
+========================================================= */
+
+document.getElementById(
+    "speed1"
+).onclick=()=>{
+
+    if(
+        money>=100 &&
+        speed<30
+    ){
+
+        money-=100;
+
+        speed=
+            Math.min(
+                speed+1,
+                30
+            );
+
+        updateMoney();
+
+        updateSpeed();
+
+        showEvent(
+            "⚡ Hız +1!"
+        );
+    }
+};
+
+document.getElementById(
+    "speed5"
+).onclick=()=>{
+
+    if(
+        money>=500 &&
+        speed<30
+    ){
+
+        money-=500;
+
+        speed=
+            Math.min(
+                speed+5,
+                30
+            );
+
+        updateMoney();
+
+        updateSpeed();
+
+        showEvent(
+            "⚡ Hız +5!"
+        );
+    }
+};
+
+document.getElementById(
+    "speed10k"
+).onclick=()=>{
+
+    if(
+        money>=10000 &&
+        speed<30
+    ){
+
+        money-=10000;
+
+        speed=
+            Math.min(
+                speed+5,
+                30
+            );
+
+        updateMoney();
+
+        updateSpeed();
+
+        showEvent(
+            "⚡ Hız +5!"
+        );
+    }
+};
+
+document.getElementById(
+    "cap1"
+).onclick=()=>{
+
+    if(money>=250){
+
+        money-=250;
+
+        inventoryCapacity+=1;
+
+        updateMoney();
+
+        updateInventoryUI();
+
+        showEvent(
+            "🎒 Kapasite +1!"
+        );
+    }
+};
+
+document.getElementById(
+    "cap5"
+).onclick=()=>{
+
+    if(money>=1000){
+
+        money-=1000;
+
+        inventoryCapacity+=5;
+
+        updateMoney();
+
+        updateInventoryUI();
+
+        showEvent(
+            "🎒 Kapasite +5!"
+        );
+    }
+};
+
+document.getElementById(
+    "cap100"
+).onclick=()=>{
+
+    if(money>=20000){
+
+        money-=20000;
+
+        inventoryCapacity+=100;
+
+        updateMoney();
+
+        updateInventoryUI();
+
+        showEvent(
+            "🎒 Kapasite +100!"
+        );
+    }
+};
+
+/* =========================================================
+   RELASE
+========================================================= */
+
+document.getElementById(
+    "codeButton"
+).onclick=()=>{
+
+    const input=
+        document.getElementById(
+            "codeInput"
+        );
+
+    const code=
+        input.value
+        .trim()
+        .toUpperCase();
+
+    if(code==="RELASE"){
+
+        if(codeUsed){
+
+            showEvent(
+                "❌ Bu kodu zaten kullandın!"
+            );
+
+            return;
+        }
+
+        money+=1000000;
+
+        updateMoney();
+
+        codeUsed=true;
+
+        showEvent(
+            "🎁 RELASE! +$1.000.000"
+        );
+
+        input.value="";
+
+    }else{
+
+        showEvent(
+            "❌ Geçersiz kod!"
+        );
+    }
+};
+
+/* =========================================================
+   OYUNA BAŞLA
+========================================================= */
+
+document.getElementById(
+    "startButton"
+).onclick=()=>{
+
+    gameStarted=true;
+
+    document.getElementById(
+        "startScreen"
+    ).style.display=
+        "none";
+
+    updateInventoryUI();
+
+    updateMoney();
+
+    updateSpeed();
+
+    showEvent(
+        "🥚 Egg Rush'a hoş geldin!"
+    );
+
+    renderer.domElement
+        .requestPointerLock();
+};
+
+/* =========================================================
+   RESIZE
+========================================================= */
+
+window.addEventListener(
+    "resize",
+    ()=>{
+
+        camera.aspect=
+            innerWidth/
+            innerHeight;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            innerWidth,
+            innerHeight
+        );
+    }
+);
+
+/* =========================================================
+   ANA DÖNGÜ
+========================================================= */
+
+const clock=
+    new THREE.Clock();
+
+function animate(time){
+
+    requestAnimationFrame(
+        animate
+    );
+
+    const delta=
+        Math.min(
+            clock.getDelta(),
+            .05
+        );
+
+    updatePlayer(delta);
+
+    updateEnemy(delta);
+
+    collectEggs();
+
+    deliverEggs();
+
+    updateCamera();
+
+    updateBubble();
+
+    updateRemoteBubbles();
+
+    updateNetwork(delta);
+
+    animateEggs(time);
+
+    renderer.render(
+        scene,
+        camera
+    );
+}
+
+updateInventoryUI();
+updateMoney();
+updateSpeed();
+
+animate(0);
+
+</script>
+
+</body>
+</html>
